@@ -4,12 +4,12 @@ const config = {
     devApiUrl: 'http://localhost:8000',
     
     // Production API endpoint (replace with your RunPod endpoint)
-    prodApiUrl: 'https://your-runpod-endpoint.runpod.net',
+    prodApiUrl: process.env.NEXT_PUBLIC_API_URL || 'https://your-runpod-endpoint.runpod.net',
     
     // Use production URL if not in development
     apiUrl: process.env.NODE_ENV === 'development' 
         ? 'http://localhost:8000'
-        : 'https://your-runpod-endpoint.runpod.net',
+        : process.env.NEXT_PUBLIC_API_URL || 'https://your-runpod-endpoint.runpod.net',
     
     // API endpoints
     endpoints: {
