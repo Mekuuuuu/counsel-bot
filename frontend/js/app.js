@@ -240,7 +240,7 @@ const chatManager = {
         }
     },
 
-    handleMessageSubmit(e) {
+    async handleMessageSubmit(e) {
         e.preventDefault();
         
         const message = this.messageInput.value.trim();
@@ -250,14 +250,61 @@ const chatManager = {
         this.addMessage(message, true);
         this.chatHistory.push({ message, isUser: true });
         
-        const aiResponse = this.getAIResponse(message);
-        setTimeout(() => {
-            this.addMessage(aiResponse, false);
-            this.chatHistory.push({ message: aiResponse, isUser: false });
+        try {
+            // Get main response
+            const response = await fetch(`${config.api.url}/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: message
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get response');
+            }
+
+            const result = await response.json();
+            
+            // Get sentiment and mental health classification
+            const [sentimentRes, mentalHealthRes] = await Promise.all([
+                fetch(`${config.api.url}/sentiment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: message })
+                }),
+                fetch(`${config.api.url}/mental-health`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: message })
+                })
+            ]);
+
+            const sentimentData = await sentimentRes.json();
+            const mentalHealthData = await mentalHealthRes.json();
+            
+            // Add the response with metadata
+            this.addMessage(result.response, false);
+            this.chatHistory.push({ 
+                message: result.response, 
+                isUser: false,
+                metadata: {
+                    sentiment: sentimentData.sentiment,
+                    mentalHealth: mentalHealthData.classification
+                }
+            });
+            
+            // Save chat history
             this.saveChatHistory();
-        }, 500);
-        
-        this.messageInput.value = '';
+        } catch (error) {
+            console.error('Error getting AI response:', error);
+            this.addMessage("I apologize, but I'm having trouble processing your message right now. Please try again later.", false);
+        } finally {
+            this.setWaitingState(false);
+            this.messageInput.value = '';
+        }
     }
 };
 
