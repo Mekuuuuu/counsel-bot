@@ -3,12 +3,7 @@
     "outputDirectory": "frontend",
     "routes": [
       {
-        "src": "/js/(.*)",
-        "dest": "/js/$1"
-      },
-      {
-        "src": "/css/(.*)",
-        "dest": "/css/$1"
+        "handle": "filesystem"
       },
       {
         "src": "/about",
@@ -19,4 +14,4 @@
         "dest": "/index.html"
       }
     ]
-  }
+}
